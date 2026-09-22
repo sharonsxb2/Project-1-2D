@@ -26,21 +26,30 @@ public class PlayerController : MonoBehaviour
     #region Unity_functions
     private void Awake() {
         /* TODO: Update your Awake function to initialize all variables needed. This includes your attackTimer, and your HPSlider.value.*/
-
+        attackTimer = 0;
+        
         /* TODO 4.1: Set HPSlider.value to a ratio between the 
             player's current health and maximum health. */
-            
         PlayerRB = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
     }
     private void Update() {
+        if (isAttacking) {
+            return;
+        }
         /*TODO 1.1: Write an Update function that will call the Move() helper function while also updating the x_input and y_input values.
         You will also need to edit this function when you call attacks, and interacting with chests.*/
-
+        x_input = Input.GetAxisRaw("Horizontal");
+        y_input = Input.GetAxisRaw("Vertical");
+        Move();
         /* TODO 1.2: Check if the attack key is being pressed. If so, attack by calling your Attack() function
          * IMPORTANT:  You will need to use `Input.GetKeyDown(KeyCode key)` to determine if the key is being pressed
         */
-
+        if (attackTimer < 0 && Input.GetKeyDown(KeyCode.F)) {
+            Attack();
+        } else {
+            attackTimer -= Time.deltaTime;
+        }
         /* TODO 1.3: Modify your attack conditional statement to only attack when attackTimer < 0. Otherwise, decrement the attackTimer. */
     }
     #endregion
@@ -62,6 +71,12 @@ public class PlayerController : MonoBehaviour
     {
         // TODO 1.3: Set the attackTimer to attackSpeed to reset the attack cooldown 
         Debug.Log("Attacking now");
+        Debug.Log(currDirection);
+
+        attackTimer = attackSpeed;
+
+        StartCoroutine(AttackRoutine());
+
     }
 
     IEnumerator AttackRoutine()
@@ -94,10 +109,30 @@ public class PlayerController : MonoBehaviour
     private void Move()
     {
         /*TODO 1.1: Edit the Move() function which will set PlayerRB.velocity to a vector based on which input the player is pressing.*/
+        if (x_input > 0) {
+            PlayerRB.linearVelocity = Vector2.right;
+            currDirection = Vector2.right;
+        }
+        else if (x_input < 0) {
+            PlayerRB.linearVelocity = Vector2.left;
+            currDirection = Vector2.left;
 
+        }
+        else if (y_input > 0) {
+            PlayerRB.linearVelocity = Vector2.up;
+            currDirection = Vector2.up;
+        }
+        else if (y_input < 0) {
+            PlayerRB.linearVelocity = Vector2.down;
+            currDirection = Vector2.down;
+        }
+        else {
+            PlayerRB.linearVelocity = Vector2.zero;
+        }
+        PlayerRB.linearVelocity *= moveSpeed;
         /* TODO 1.4: Set currDirection to the correct Vector direction i.e. Vector2.left.
          * HINT: there are four cardinal directions. */
-
+        
 
         /* DO NOT MODIFY ANYTHING BELOW THIS LINE UNLESS YOU REALLY KNOW WHAT YOU'RE DOING */
 
