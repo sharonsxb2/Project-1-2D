@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour
 {
@@ -17,6 +18,7 @@ public class PlayerController : MonoBehaviour
     #region Health_variables
     public float maxHealth = 5;
     float currHealth = 5;
+    public Slider HPSlider;
     #endregion
 
     #region Animation_components
@@ -27,15 +29,22 @@ public class PlayerController : MonoBehaviour
     private void Awake() {
         /* TODO: Update your Awake function to initialize all variables needed. This includes your attackTimer, and your HPSlider.value.*/
         attackTimer = 0;
+        currHealth = maxHealth;
         
         /* TODO 4.1: Set HPSlider.value to a ratio between the 
             player's current health and maximum health. */
+        HPSlider.value = currHealth/maxHealth;
+
         PlayerRB = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
     }
     private void Update() {
         if (isAttacking) {
             return;
+        }
+        if (Input.GetKeyDown(KeyCode.E)) {
+            Debug.Log("pressed E");
+            Interact();
         }
         /*TODO 1.1: Write an Update function that will call the Move() helper function while also updating the x_input and y_input values.
         You will also need to edit this function when you call attacks, and interacting with chests.*/
@@ -50,6 +59,7 @@ public class PlayerController : MonoBehaviour
         } else {
             attackTimer -= Time.deltaTime;
         }
+        
         /* TODO 1.3: Modify your attack conditional statement to only attack when attackTimer < 0. Otherwise, decrement the attackTimer. */
     }
     #endregion
@@ -96,6 +106,8 @@ public class PlayerController : MonoBehaviour
                 Debug.Log("Tons of Damage");
                 /* TODO 3.2: Call TakeDamage() inside of the enemy's Enemy script using
                 the "hit" reference variable */
+                hit.transform.GetComponent<Enemy>().TakeDamage(damage);
+                FindFirstObjectByType<AudioManager>().Play("PlayerAttack");
             }
         }
 
@@ -158,30 +170,53 @@ public class PlayerController : MonoBehaviour
     {
         /* TODO 3.1: Adjust currHealth when the player takes damage
         IMPORTANT: What happens when the player's health reaches 0? */
+        if (value >= currHealth) {
+            Die();
+        } else {
+            currHealth -= value;
+        }
+        Debug.Log(currHealth);
 
         /* TODO 4.1: Update the value of HPSlider after the player's health changes. */
+        HPSlider.value = currHealth/maxHealth;
+        FindFirstObjectByType<AudioManager>().Play("PlayerHurt");
     }
 
     public void Heal(float value)
     {
         /* TODO 3.1: Adjust currHealth when the player heals
         IMPORTANT: What happens when the player's health surpasses their max health? Should currHealth be above maxHealth?*/
-
+        currHealth += value;
+        if (currHealth > maxHealth) {
+            currHealth = maxHealth;
+        }
         /* TODO 4.1: Update the value of HPSlider after the player's health changes. */
+        HPSlider.value = currHealth/maxHealth;
     }
 
     public void Die()
     {
+        FindFirstObjectByType<AudioManager>().Play("PlayerDeath");
         Destroy(this.gameObject);
+        GameObject gm = GameObject.FindWithTag("GameController");
+        gm.GetComponent<GameManager>().LoseGame();
+
     }
     #endregion
 
     #region Interact_functions
     private void Interact()
     {
+        Debug.Log("interacted");
         /* TODO 6.3: Use a BoxCastAll raycast to check what is infront of the player. 
          * If there is a chest game object, open the chest by calling it's Open() function */
-
+        RaycastHit2D[] facing = Physics2D.BoxCastAll(PlayerRB.position + currDirection, new Vector2(0.5f, 0.5f), 0f, Vector2.zero, 0f);
+        foreach (RaycastHit2D item in facing) {
+            if (item.transform.CompareTag("Chest")) {
+                Debug.Log("found chest");
+                item.transform.GetComponent<Chest>().Open();
+            }
+        }
     }
     #endregion
 }

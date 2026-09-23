@@ -8,6 +8,7 @@ public class HealthPack : MonoBehaviour
     [SerializeField]
     [Tooltip("amount the player heals")]
     private int healAmount;
+    public GameObject healthPotion;
     #endregion
 
     #region Heal_functions
@@ -16,6 +17,11 @@ public class HealthPack : MonoBehaviour
         /* TODO Part 6.1: If this object collides with the player, heal the player by healAmount by calling the player's Heal() function.
          * After healing this health potion should be destroyed.
          * HINT: The variable, other, contains a reference to the object that collides with this health potion. */
+         if (other.transform.CompareTag("Player")) {
+            other.transform.GetComponentInParent<PlayerController>().Heal(healAmount);
+            FindFirstObjectByType<AudioManager>().Play("Potion");
+            Destroy(this.gameObject);
+         }
 
     }
     #endregion
