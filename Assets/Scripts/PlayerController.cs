@@ -7,6 +7,7 @@ public class PlayerController : MonoBehaviour
 {
     #region Movement_variables
     public float moveSpeed = 3;
+    public bool sprinting; // Sprint lock, not hold to sprint
     float x_input;
     float y_input;
     #endregion
@@ -16,9 +17,16 @@ public class PlayerController : MonoBehaviour
     #endregion
 
     #region Health_variables
-    public float maxHealth = 5;
-    float currHealth = 5;
+    public float maxHealth = 20;
+    float currHealth = 20;
     public Slider HPSlider;
+    #endregion
+
+    #region Stamina_variables
+    public float maxStamina = 10;
+    float currStamina = 10;
+    public Slider StaminaSlider;
+    private float t;
     #endregion
 
     #region Animation_components
@@ -30,10 +38,13 @@ public class PlayerController : MonoBehaviour
         /* TODO: Update your Awake function to initialize all variables needed. This includes your attackTimer, and your HPSlider.value.*/
         attackTimer = 0;
         currHealth = maxHealth;
+        currStamina = maxStamina;
         
         /* TODO 4.1: Set HPSlider.value to a ratio between the 
             player's current health and maximum health. */
         HPSlider.value = currHealth/maxHealth;
+        StaminaSlider.value = currStamina/maxStamina;
+        t = 0.0f;
 
         PlayerRB = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
@@ -46,6 +57,32 @@ public class PlayerController : MonoBehaviour
             Debug.Log("pressed E");
             Interact();
         }
+        if (currStamina <= 1) {
+            sprinting = false;
+            moveSpeed = 3;
+        }
+        if (Input.GetKeyDown(KeyCode.LeftShift)) {
+            Debug.Log("pressed shift");
+            sprinting = !sprinting;
+            if (sprinting) {
+                moveSpeed = 5;
+                t += 0.3f * Time.deltaTime;
+                Debug.Log(t);
+            }
+            else {
+                moveSpeed = 3;
+                t += 0.1f * Time.deltaTime;
+                Debug.Log(t);
+            }
+        }
+        
+        if (sprinting) {
+            StartCoroutine(sprintingStamina());
+        }
+        else {
+            StartCoroutine(walkingStamina());
+        }
+        StaminaSlider.value = currStamina/maxStamina;
         /*TODO 1.1: Write an Update function that will call the Move() helper function while also updating the x_input and y_input values.
         You will also need to edit this function when you call attacks, and interacting with chests.*/
         x_input = Input.GetAxisRaw("Horizontal");
@@ -63,8 +100,6 @@ public class PlayerController : MonoBehaviour
         /* TODO 1.3: Modify your attack conditional statement to only attack when attackTimer < 0. Otherwise, decrement the attackTimer. */
     }
     #endregion
-
-
 
     #region Attack_variables
     public float damage = 2;
@@ -201,6 +236,24 @@ public class PlayerController : MonoBehaviour
         GameObject gm = GameObject.FindWithTag("GameController");
         gm.GetComponent<GameManager>().LoseGame();
 
+    }
+    #endregion
+
+    #region Stamina_functions
+    IEnumerator sprintingStamina() {
+        Debug.Log("sprinting, stamina should decrease");
+        // While the player is sprinting, decrease their stamina value and reflect this in the slider
+        // float staminaChange = (currStamina - Time.deltaTime * 0.5f) / maxStamina;
+        // Debug.Log(staminaChange);
+        currStamina = Mathf.Lerp(currStamina, 0, t);
+        yield return null;
+    }
+
+    IEnumerator walkingStamina() {
+        // While the player is walking, restore their stamina value and reflect in the slider
+        // float staminaChange = (currStamina + Time.deltaTime * 0.3f) / maxStamina;
+        currStamina = Mathf.Lerp(currStamina, maxStamina, t);
+        yield return null;
     }
     #endregion
 
